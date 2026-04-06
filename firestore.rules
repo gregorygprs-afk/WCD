@@ -1,0 +1,180 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+        (request.auth.token.email == "gregorygprs@gmail.com" && request.auth.token.email_verified == true)
+      );
+    }
+
+    function isOrganizer() {
+      return isAuthenticated() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'organizer' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(['uid', 'name', 'email', 'role', 'photoURL']) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.email is string && isValidEmail(data.email) &&
+             data.role in ['admin', 'organizer', 'volunteer'] &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() < 1000));
+    }
+
+    function isValidEventDay(data) {
+      return hasOnlyAllowedFields(['date', 'location', 'description']) &&
+             data.date is string && data.date.size() > 0 && data.date.size() < 30 &&
+             data.location is string && data.location.size() > 0 && data.location.size() < 200 &&
+             (!('description' in data) || (data.description is string && data.description.size() < 2000));
+    }
+
+    function isValidActivity(data) {
+      return hasOnlyAllowedFields(['dayId', 'title', 'description', 'startTime', 'endTime', 'type', 'location']) &&
+             data.dayId is string && data.dayId.size() > 0 && data.dayId.size() < 100 &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             (!('description' in data) || (data.description is string && data.description.size() < 5000)) &&
+             data.startTime is string && data.startTime.size() > 0 && data.startTime.size() < 30 &&
+             data.endTime is string && data.endTime.size() > 0 && data.endTime.size() < 30 &&
+             data.type in ['palestra', 'workshop', 'painel', 'roda_de_conversa', 'experiencia_cultural', 'atividade_educativa', 'outro'] &&
+             (!('location' in data) || (data.location is string && data.location.size() < 200));
+    }
+
+    function isValidAssignment(data) {
+      return hasOnlyAllowedFields(['activityId', 'userId', 'role']) &&
+             data.activityId is string && data.activityId.size() > 0 && data.activityId.size() < 100 &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() < 100 &&
+             data.role in ['lider', 'diretor', 'participante'];
+    }
+
+    function isValidAuditLog(data) {
+      return hasOnlyAllowedFields(['entityType', 'entityId', 'action', 'changes', 'timestamp', 'userId']) &&
+             data.entityType is string && data.entityType.size() > 0 && data.entityType.size() < 100 &&
+             data.entityId is string && data.entityId.size() > 0 && data.entityId.size() < 100 &&
+             data.action in ['create', 'update', 'delete'] &&
+             (!('changes' in data) || (data.changes is string && data.changes.size() < 10000)) &&
+             data.timestamp is string && data.timestamp.size() > 0 && data.timestamp.size() < 50 &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() < 100;
+    }
+
+    function isValidTask(data) {
+      return hasOnlyAllowedFields(['title', 'status', 'startTime', 'projectedEndTime', 'assigneeId', 'createdAt']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.status in ['pending', 'in_progress', 'completed'] &&
+             data.startTime is string && data.startTime.size() > 0 && data.startTime.size() < 50 &&
+             data.projectedEndTime is string && data.projectedEndTime.size() > 0 && data.projectedEndTime.size() < 50 &&
+             data.assigneeId is string && data.assigneeId.size() > 0 && data.assigneeId.size() < 100 &&
+             (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() < 50));
+    }
+
+    function isValidTaskComment(data) {
+      return hasOnlyAllowedFields(['taskId', 'text', 'authorId', 'timestamp', 'mentions']) &&
+             data.taskId is string && data.taskId.size() > 0 && data.taskId.size() < 100 &&
+             data.text is string && data.text.size() > 0 && data.text.size() < 2000 &&
+             data.authorId is string && data.authorId.size() > 0 && data.authorId.size() < 100 &&
+             data.timestamp is string && data.timestamp.size() > 0 && data.timestamp.size() < 50 &&
+             (!('mentions' in data) || (data.mentions is list && data.mentions.size() < 50));
+    }
+
+    function isValidNote(data) {
+      return hasOnlyAllowedFields(['content', 'lastUpdatedBy', 'lastUpdatedAt']) &&
+             data.content is string && data.content.size() < 100000 &&
+             (!('lastUpdatedBy' in data) || (data.lastUpdatedBy is string && data.lastUpdatedBy.size() < 100)) &&
+             (!('lastUpdatedAt' in data) || (data.lastUpdatedAt is string && data.lastUpdatedAt.size() < 50));
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && (
+        (isOwner(userId) && request.resource.data.role == 'volunteer') || isAdmin()
+      );
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && (
+        (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /eventDays/{dayId} {
+      allow read: if isAuthenticated();
+      allow create: if isOrganizer() && isValidEventDay(request.resource.data);
+      allow update: if isOrganizer() && isValidEventDay(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /activities/{activityId} {
+      allow read: if isAuthenticated();
+      allow create: if isOrganizer() && isValidActivity(request.resource.data);
+      allow update: if isOrganizer() && isValidActivity(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /assignments/{assignmentId} {
+      allow read: if isAuthenticated();
+      allow create: if isOrganizer() && isValidAssignment(request.resource.data);
+      allow update: if isOrganizer() && isValidAssignment(request.resource.data);
+      allow delete: if isOrganizer();
+    }
+
+    match /auditLogs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidAuditLog(request.resource.data);
+      allow update: if false; // Audit logs should be immutable
+      allow delete: if false; // Audit logs should be immutable
+    }
+
+    match /tasks/{taskId} {
+      allow read: if isAuthenticated();
+      allow create: if isOrganizer() && isValidTask(request.resource.data);
+      allow update: if isAuthenticated() && isValidTask(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /taskComments/{commentId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidTaskComment(request.resource.data);
+      allow update: if isAuthenticated() && isValidTaskComment(request.resource.data) && isOwner(resource.data.authorId);
+      allow delete: if isAdmin() || isOwner(resource.data.authorId);
+    }
+
+    match /notes/{noteId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidNote(request.resource.data);
+      allow update: if isAuthenticated() && isValidNote(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}

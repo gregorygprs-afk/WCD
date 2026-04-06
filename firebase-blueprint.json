@@ -1,0 +1,140 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the system, typically an organizer or volunteer.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "name": { "type": "string", "description": "Full name" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "organizer", "volunteer"] },
+        "photoURL": { "type": "string" }
+      },
+      "required": ["uid", "name", "email", "role"]
+    },
+    "EventDay": {
+      "title": "EventDay",
+      "description": "A specific day of the event.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date" },
+        "location": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["date", "location"]
+    },
+    "Activity": {
+      "title": "Activity",
+      "description": "An activity happening during the event.",
+      "type": "object",
+      "properties": {
+        "dayId": { "type": "string", "description": "Reference to EventDay" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "type": { "type": "string", "enum": ["palestra", "workshop", "painel", "roda_de_conversa", "experiencia_cultural", "atividade_educativa", "outro"] },
+        "location": { "type": "string" }
+      },
+      "required": ["dayId", "title", "startTime", "endTime", "type"]
+    },
+    "Assignment": {
+      "title": "Assignment",
+      "description": "Assigns a user to an activity with a specific role.",
+      "type": "object",
+      "properties": {
+        "activityId": { "type": "string" },
+        "userId": { "type": "string" },
+        "role": { "type": "string", "enum": ["lider", "diretor", "participante"] }
+      },
+      "required": ["activityId", "userId", "role"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Record of changes made by users or AI.",
+      "type": "object",
+      "properties": {
+        "entityType": { "type": "string" },
+        "entityId": { "type": "string" },
+        "action": { "type": "string", "enum": ["create", "update", "delete"] },
+        "changes": { "type": "string", "description": "JSON string of changes" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string", "description": "User or 'AI' that made the change" }
+      },
+      "required": ["entityType", "entityId", "action", "timestamp", "userId"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "A task or stage of the event organization.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "in_progress", "completed"] },
+        "startTime": { "type": "string", "format": "date-time" },
+        "projectedEndTime": { "type": "string", "format": "date-time" },
+        "assigneeId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "status", "startTime", "projectedEndTime", "assigneeId"]
+    },
+    "TaskComment": {
+      "title": "TaskComment",
+      "description": "A comment on a task, potentially mentioning users.",
+      "type": "object",
+      "properties": {
+        "taskId": { "type": "string" },
+        "text": { "type": "string" },
+        "authorId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "mentions": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["taskId", "text", "authorId", "timestamp"]
+    },
+    "Note": {
+      "title": "Note",
+      "description": "Global collaborative notes.",
+      "type": "object",
+      "properties": {
+        "content": { "type": "string" },
+        "lastUpdatedBy": { "type": "string" },
+        "lastUpdatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["content"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Users collection"
+    },
+    "/eventDays/{dayId}": {
+      "schema": { "$ref": "#/entities/EventDay" },
+      "description": "Event days collection"
+    },
+    "/activities/{activityId}": {
+      "schema": { "$ref": "#/entities/Activity" },
+      "description": "Activities collection"
+    },
+    "/assignments/{assignmentId}": {
+      "schema": { "$ref": "#/entities/Assignment" },
+      "description": "Assignments collection"
+    },
+    "/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Audit logs collection"
+    },
+    "/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/Task" },
+      "description": "Tasks collection"
+    },
+    "/taskComments/{commentId}": {
+      "schema": { "$ref": "#/entities/TaskComment" },
+      "description": "Task comments collection"
+    },
+    "/notes/{noteId}": {
+      "schema": { "$ref": "#/entities/Note" },
+      "description": "Global notes collection"
+    }
+  }
+}
