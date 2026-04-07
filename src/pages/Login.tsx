@@ -23,7 +23,7 @@ export default function Login() {
           uid: user.uid,
           name: name.trim(),
           email: '',
-          role: 'organizer', // Default to organizer for this collaborative tool
+          role: 'organizer', // Default role for collaborative access
         });
       }
     } catch (error) {
@@ -55,7 +55,7 @@ export default function Login() {
           <form onSubmit={handleJoin} className="space-y-6">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Como você quer ser chamado?
+                Como você quer ser chamado na plataforma?
               </label>
               <div className="mt-1">
                 <input
@@ -66,7 +66,7 @@ export default function Login() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                  placeholder="Seu nome"
+                  placeholder="Seu nome ou apelido"
                 />
               </div>
             </div>
@@ -81,13 +81,18 @@ export default function Login() {
                   <Loader2 className="animate-spin h-5 w-5" />
                 ) : (
                   <>
-                    Entrar na Plataforma
+                    Acessar Organizador
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </>
                 )}
               </button>
             </div>
           </form>
+          <div className="mt-6 text-center">
+            <p className="text-xs text-gray-500">
+              Acesso instantâneo e colaborativo. Seus dados são salvos na nuvem.
+            </p>
+          </div>
         </div>
       </div>
     </div>

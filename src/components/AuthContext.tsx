@@ -38,22 +38,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (userSnap.exists()) {
             setAppUser(userSnap.data() as AppUser);
             setLoading(false);
-          } else if (!firebaseUser.isAnonymous) {
-            // Create new user for Google Login
-            const newUser: AppUser = {
-              uid: firebaseUser.uid,
-              name: firebaseUser.displayName || 'Unknown',
-              email: firebaseUser.email || '',
-              role: firebaseUser.email === 'gregorygprs@gmail.com' ? 'admin' : 'volunteer',
-              photoURL: firebaseUser.photoURL || undefined
-            };
-            await setDoc(userRef, newUser);
-            // onSnapshot will trigger again after setDoc
           } else {
-            // For anonymous users, Login.tsx will create the document.
-            // We just wait for the snapshot to trigger when it's created.
-            // But we need to set loading to false so the UI can render Login.tsx
-            setLoading(false);
+            // For anonymous users or new users, we wait for Login.tsx to create the document
+            // or we can handle auto-creation if it's a Google user (though we removed Google login)
+            if (!firebaseUser.isAnonymous) {
+              const newUser: AppUser = {
+                uid: firebaseUser.uid,
+                name: firebaseUser.displayName || 'Usuário',
+                email: firebaseUser.email || '',
+                role: firebaseUser.email === 'gregorygprs@gmail.com' ? 'admin' : 'organizer',
+                photoURL: firebaseUser.photoURL || undefined
+              };
+              await setDoc(userRef, newUser);
+            } else {
+              // Just wait for Login.tsx to finish the setDoc
+              setLoading(false);
+            }
           }
         });
       } else {
