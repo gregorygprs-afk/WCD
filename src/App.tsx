@@ -10,20 +10,20 @@ import OrdemDoDia from './pages/OrdemDoDia';
 import AuditLogs from './pages/AuditLogs';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { appUser, loading } = useAuth();
+  const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
-  if (!appUser) return <Navigate to="/login" />;
+  if (!user) return <Navigate to="/login" />;
   return <>{children}</>;
 };
 
 function AppRoutes() {
-  const { appUser, loading } = useAuth();
+  const { user, loading } = useAuth();
   
   if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
 
   return (
     <Routes>
-      <Route path="/login" element={appUser ? <Navigate to="/" /> : <Login />} />
+      <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="activities" element={<Activities />} />
