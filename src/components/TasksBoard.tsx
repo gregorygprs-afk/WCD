@@ -49,7 +49,7 @@ export default function TasksBoard() {
 
   const handleUpdateStatus = async (taskId: string, newStatus: string) => {
     try {
-      await updateDocument('tasks', taskId, { status: newStatus }, appUser?.uid || 'unknown');
+      await updateDocument('tasks', taskId, { status: newStatus });
     } catch (error) {
       alert('Erro ao atualizar status');
     }
