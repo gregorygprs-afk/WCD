@@ -31,7 +31,6 @@ function AppRoutes() {
         <Route path="od" element={<OrdemDoDia />} />
         <Route path="logs" element={<AuditLogs />} />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

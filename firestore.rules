@@ -106,13 +106,6 @@ service cloud.firestore {
              (!('mentions' in data) || (data.mentions is list && data.mentions.size() < 50));
     }
 
-    function isValidNote(data) {
-      return hasOnlyAllowedFields(['content', 'lastUpdatedBy', 'lastUpdatedAt']) &&
-             data.content is string && data.content.size() < 100000 &&
-             (!('lastUpdatedBy' in data) || (data.lastUpdatedBy is string && data.lastUpdatedBy.size() < 100)) &&
-             (!('lastUpdatedAt' in data) || (data.lastUpdatedAt is string && data.lastUpdatedAt.size() < 50));
-    }
-
     // ===============================================================
     // Rules
     // ===============================================================
@@ -120,7 +113,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isValidUser(request.resource.data) && (
-        (isOwner(userId) && (request.resource.data.role == 'volunteer' || request.resource.data.role == 'organizer')) || isAdmin()
+        (isOwner(userId) && request.resource.data.role == 'volunteer') || isAdmin()
       );
       allow update: if isAuthenticated() && isValidUser(request.resource.data) && (
         (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin()
@@ -168,13 +161,6 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidTaskComment(request.resource.data);
       allow update: if isAuthenticated() && isValidTaskComment(request.resource.data) && isOwner(resource.data.authorId);
       allow delete: if isAdmin() || isOwner(resource.data.authorId);
-    }
-
-    match /notes/{noteId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidNote(request.resource.data);
-      allow update: if isAuthenticated() && isValidNote(request.resource.data);
-      allow delete: if isAdmin();
     }
   }
 }

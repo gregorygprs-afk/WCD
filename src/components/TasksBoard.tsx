@@ -39,7 +39,7 @@ export default function TasksBoard() {
       await createDocument('tasks', {
         ...newTask,
         createdAt: new Date().toISOString()
-      });
+      }, appUser?.uid || 'unknown');
       setIsModalOpen(false);
       setNewTask({ title: '', status: 'pending', startTime: '', projectedEndTime: '', assigneeId: '' });
     } catch (error) {
@@ -49,7 +49,7 @@ export default function TasksBoard() {
 
   const handleUpdateStatus = async (taskId: string, newStatus: string) => {
     try {
-      await updateDocument('tasks', taskId, { status: newStatus });
+      await updateDocument('tasks', taskId, { status: newStatus }, appUser?.uid || 'unknown');
     } catch (error) {
       alert('Erro ao atualizar status');
     }
@@ -75,7 +75,7 @@ export default function TasksBoard() {
         authorId: appUser?.uid || 'unknown',
         timestamp: new Date().toISOString(),
         mentions
-      });
+      }, appUser?.uid || 'unknown');
       setNewComment('');
       setShowMentions(false);
     } catch (error) {

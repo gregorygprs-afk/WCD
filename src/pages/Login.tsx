@@ -1,39 +1,8 @@
-import React, { useState } from 'react';
-import { signInAnonymously } from 'firebase/auth';
-import { auth, db } from '../firebase';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { Sparkles, ArrowRight, Loader2 } from 'lucide-react';
+import React from 'react';
+import { signInWithGoogle } from '../firebase';
+import { Sparkles } from 'lucide-react';
 
 export default function Login() {
-  const [name, setName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleJoin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-    setIsLoading(true);
-    try {
-      const { user } = await signInAnonymously(auth);
-      
-      const userRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userRef);
-      
-      if (!userSnap.exists()) {
-        await setDoc(userRef, {
-          uid: user.uid,
-          name: name.trim(),
-          email: '',
-          role: 'organizer', // Default role for collaborative access
-        });
-      }
-    } catch (error) {
-      console.error(error);
-      alert('Erro ao entrar. Tente novamente.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -52,46 +21,16 @@ export default function Login() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-gray-100">
-          <form onSubmit={handleJoin} className="space-y-6">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Como você quer ser chamado na plataforma?
-              </label>
-              <div className="mt-1">
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                  placeholder="Seu nome ou apelido"
-                />
-              </div>
-            </div>
-
+          <div className="space-y-6">
             <div>
               <button
-                type="submit"
-                disabled={isLoading || !name.trim()}
-                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 transition-all"
+                onClick={signInWithGoogle}
+                className="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all"
               >
-                {isLoading ? (
-                  <Loader2 className="animate-spin h-5 w-5" />
-                ) : (
-                  <>
-                    Acessar Organizador
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </>
-                )}
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="h-5 w-5 mr-2" />
+                Entrar com Google
               </button>
             </div>
-          </form>
-          <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500">
-              Acesso instantâneo e colaborativo. Seus dados são salvos na nuvem.
-            </p>
           </div>
         </div>
       </div>
