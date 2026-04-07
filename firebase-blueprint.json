@@ -90,6 +90,17 @@
         "mentions": { "type": "array", "items": { "type": "string" } }
       },
       "required": ["taskId", "text", "authorId", "timestamp"]
+    },
+    "Note": {
+      "title": "Note",
+      "description": "Global collaborative notes.",
+      "type": "object",
+      "properties": {
+        "content": { "type": "string" },
+        "lastUpdatedBy": { "type": "string" },
+        "lastUpdatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["content"]
     }
   },
   "firestore": {
@@ -120,6 +131,10 @@
     "/taskComments/{commentId}": {
       "schema": { "$ref": "#/entities/TaskComment" },
       "description": "Task comments collection"
+    },
+    "/notes/{noteId}": {
+      "schema": { "$ref": "#/entities/Note" },
+      "description": "Global notes collection"
     }
   }
 }

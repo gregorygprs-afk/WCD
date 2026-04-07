@@ -39,7 +39,7 @@ export default function TasksBoard() {
       await createDocument('tasks', {
         ...newTask,
         createdAt: new Date().toISOString()
-      }, appUser?.uid || 'unknown');
+      });
       setIsModalOpen(false);
       setNewTask({ title: '', status: 'pending', startTime: '', projectedEndTime: '', assigneeId: '' });
     } catch (error) {
@@ -75,7 +75,7 @@ export default function TasksBoard() {
         authorId: appUser?.uid || 'unknown',
         timestamp: new Date().toISOString(),
         mentions
-      }, appUser?.uid || 'unknown');
+      });
       setNewComment('');
       setShowMentions(false);
     } catch (error) {

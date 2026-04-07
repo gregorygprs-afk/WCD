@@ -4,6 +4,7 @@ import { db } from '../firebase';
 import { Users, Calendar as CalendarIcon, Activity as ActivityIcon, Download } from 'lucide-react';
 import { seedDatabase } from '../lib/seedData';
 import TasksBoard from '../components/TasksBoard';
+import GlobalNotes from '../components/GlobalNotes';
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ volunteers: 0, activities: 0, days: 0 });
@@ -103,6 +104,8 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      <GlobalNotes />
 
       <TasksBoard />
     </div>
