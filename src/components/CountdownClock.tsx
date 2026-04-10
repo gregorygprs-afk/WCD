@@ -1,28 +1,52 @@
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, limit, where } from 'firebase/firestore';
 import { db } from '../firebase';
+import { Clock } from 'lucide-react';
 
 export default function CountdownClock() {
   const [nextEvent, setNextEvent] = useState<any>(null);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
-    // Fetch event days to find the first day of the event
-    const unsub = onSnapshot(collection(db, 'eventDays'), (snapshot) => {
-      const days = snapshot.docs.map(doc => doc.data());
-      
-      // Default fallback to 21/04/2026 08:00 AM (BRT)
-      let targetDate = new Date('2026-04-21T08:00:00-03:00'); 
+    // Fetch the next upcoming activity
+    const now = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const q = query(
+      collection(db, 'activities'),
+      orderBy('startTime')
+    );
 
-      if (days.length > 0) {
-        // Sort to find the earliest day
-        days.sort((a: any, b: any) => a.date.localeCompare(b.date));
-        const firstDay = days[0] as any;
-        // Use the first day found in the database, default to 08:00 AM
-        targetDate = new Date(`${firstDay.date}T08:00:00-03:00`);
-      }
+    const unsub = onSnapshot(q, (snapshot) => {
+      const activities = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Find the first activity that is in the future
+      // Since we don't have full Date objects easily queryable without complex indexes, we filter client side for simplicity
+      const nowTime = new Date();
       
-      setNextEvent({ title: 'Início do WCD Itajaí', eventDate: targetDate });
+      // We need to match activity with its day to get the full date
+      // For simplicity, let's just fetch days too
+      // Actually, let's just fetch days and find the next day
+      // To avoid complex joins, let's just fetch eventDays
+      const daysUnsub = onSnapshot(collection(db, 'eventDays'), (daysSnap) => {
+        const days = daysSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        
+        let upcoming: any = null;
+        let minDiff = Infinity;
+
+        activities.forEach(act => {
+          const day = days.find(d => d.id === act.dayId);
+          if (day && day.date && act.startTime) {
+            const eventDate = new Date(`${day.date}T${act.startTime}:00`);
+            const diff = eventDate.getTime() - nowTime.getTime();
+            if (diff > 0 && diff < minDiff) {
+              minDiff = diff;
+              upcoming = { ...act, eventDate };
+            }
+          }
+        });
+
+        setNextEvent(upcoming);
+      });
+
+      return () => daysUnsub();
     });
 
     return () => unsub();
@@ -82,7 +106,7 @@ export default function CountdownClock() {
       </div>
       
       <div className="flex flex-col">
-        <span className="text-xs font-bold text-orange-800 uppercase tracking-wider mb-1 truncate max-w-[150px]" title={nextEvent.title}>
+        <span className="text-xs font-bold text-orange-800 uppercase tracking-wider mb-1 truncate max-w-[120px]" title={nextEvent.title}>
           {nextEvent.title}
         </span>
         <div className="flex space-x-2 text-center">
